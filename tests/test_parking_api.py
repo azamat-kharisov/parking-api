@@ -123,10 +123,10 @@ class TestExitParking:
             'client_id': test_client.id,
             'parking_id': test_parking.id
         }
+        initial_places = test_parking.count_available_places  # <-- ПЕРЕНОСИМ ДО въезда
+
         enter_response = client.post('/client_parkings', json=enter_data)
         assert enter_response.status_code == 201
-
-        initial_places = test_parking.count_available_places
 
         # Теперь выезжаем
         exit_data = {
