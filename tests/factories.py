@@ -33,12 +33,11 @@ class ClientFactory(factory.Factory):
     # Генерация номера автомобиля (например: A123BC или 123ABC)
     @factory.lazy_attribute
     def car_number(self):
-        # Варианты генерации номеров
         patterns = [
-            fake.license_plate(),  # Стандартный номер
-            f"{random.choice('ABCEHKMOPTXY')}{random.randint(100, 999)}{random.choice('ABCEHKMOPTXY')}{random.choice('ABCEHKMOPTXY')}",
-            # A123BC
-            f"{random.randint(100, 999)}{random.choice('ABCEHKMOPTXY')}{random.choice('ABCEHKMOPTXY')}",  # 123AB
+            fake.license_plate(),
+            f"{random.choice('ABCEHKMOPTXY')}{random.randint(100, 999)}"
+            f"{random.choice('ABCEHKMOPTXY')}{random.choice('ABCEHKMOPTXY')}",
+            f"{random.randint(100, 999)}{random.choice('ABCEHKMOPTXY')}{random.choice('ABCEHKMOPTXY')}",
         ]
         return random.choice(patterns)
 
