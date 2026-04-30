@@ -156,9 +156,13 @@ class TestExitParking:
         # Вручную изменяем время въезда в БД на 2.5 часа назад
         with client.application.app_context():
             from models import ClientParking, db
+            from datetime import timedelta
 
             entry = db.session.get(ClientParking, entry_id)
+            # Устанавливаем время въезда на 2.5 часа раньше
             entry.time_in = datetime.now(timezone.utc) - timedelta(hours=2, minutes=30)
+            # ВАЖНО: также нужно установить, что выезд еще не произошел
+            entry.time_out = None
             db.session.commit()
 
         # Выезжаем
@@ -166,6 +170,8 @@ class TestExitParking:
         response = client.delete("/client_parkings", json=exit_data)
 
         assert response.status_code == 200
+        assert "duration_hours" in response.json
+        assert "cost_rub" in response.json
         # Допускаем небольшую погрешность
         assert 2.49 <= response.json["duration_hours"] <= 2.51
         expected_cost = round(response.json["duration_hours"] * 100, 2)
