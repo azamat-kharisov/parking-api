@@ -1,21 +1,20 @@
 # tests/test_models.py
-import sys
 import os
+import sys
+from datetime import datetime, timedelta, timezone
 
-# Добавляем текущую директорию в путь импорта
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
+
 from app import create_app
 from models import db, Client, Parking, ClientParking
-from datetime import datetime, timedelta, timezone  # ДОБАВИЛИ timezone
 
 
 @pytest.fixture
 def app():
     """Фикстура приложения для тестов"""
     app = create_app()
-    # Меняем БД на временную для тестов
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
     with app.app_context():
@@ -36,7 +35,6 @@ def client(app):
         )
         db.session.add(client)
         db.session.commit()
-        # Возвращаем ID, чтобы потом получать объект в тесте
         return client.id
 
 
@@ -78,14 +76,13 @@ class TestClientModel:
     def test_client_repr(self, app, client):
         """Тест строкового представления клиента"""
         with app.app_context():
-            # Получаем объект клиента из БД по ID
-            client_obj = db.session.get(Client, client)  # ИСПРАВИЛИ на db.session.get
+            client_obj = db.session.get(Client, client)
             assert repr(client_obj) == f"<Client {client_obj.name} {client_obj.surname}>"
 
     def test_get_client_from_db(self, app, client):
         """Тест получения клиента из БД"""
         with app.app_context():
-            fetched = db.session.get(Client, client)  # ИСПРАВИЛИ на db.session.get
+            fetched = db.session.get(Client, client)
             assert fetched is not None
             assert fetched.name == "Иван"
             assert fetched.car_number == "A123BC"
@@ -108,13 +105,13 @@ class TestParkingModel:
 
             assert parking.id is not None
             assert parking.address == "Тестовая улица, 10"
-            assert parking.opened == True
+            assert parking.opened is True
             assert parking.count_places == 100
 
     def test_parking_repr(self, app, parking):
         """Тест строкового представления парковки"""
         with app.app_context():
-            parking_obj = db.session.get(Parking, parking)  # ИСПРАВИЛИ на db.session.get
+            parking_obj = db.session.get(Parking, parking)
             assert repr(parking_obj) == f"<Parking {parking_obj.address}>"
 
     def test_parking_default_opened(self, app):
@@ -128,7 +125,7 @@ class TestParkingModel:
             db.session.add(parking)
             db.session.commit()
 
-            assert parking.opened == True  # Значение по умолчанию
+            assert parking.opened is True
 
 
 class TestClientParkingModel:
@@ -140,7 +137,7 @@ class TestClientParkingModel:
             entry = ClientParking(
                 client_id=client,
                 parking_id=parking,
-                time_in=datetime.now(timezone.utc)  # ИСПРАВИЛИ
+                time_in=datetime.now(timezone.utc)
             )
             db.session.add(entry)
             db.session.commit()
@@ -160,7 +157,7 @@ class TestClientParkingModel:
             entry2 = ClientParking(client_id=client, parking_id=parking)
             db.session.add(entry2)
 
-            with pytest.raises(Exception):  # Должна быть ошибка уникальности
+            with pytest.raises(Exception):
                 db.session.commit()
 
     def test_time_out(self, app, client, parking):
@@ -169,12 +166,12 @@ class TestClientParkingModel:
             entry = ClientParking(
                 client_id=client,
                 parking_id=parking,
-                time_in=datetime.now(timezone.utc) - timedelta(hours=2)  # ИСПРАВИЛИ
+                time_in=datetime.now(timezone.utc) - timedelta(hours=2)
             )
             db.session.add(entry)
             db.session.commit()
 
-            entry.time_out = datetime.now(timezone.utc)  # ИСПРАВИЛИ
+            entry.time_out = datetime.now(timezone.utc)
             db.session.commit()
 
             assert entry.time_out is not None
@@ -204,15 +201,12 @@ class TestRelationships:
             db.session.add(entry)
             db.session.commit()
 
-            # Получаем объекты из БД
-            client_obj = db.session.get(Client, client)  # ИСПРАВИЛИ
-            parking_obj = db.session.get(Parking, parking)  # ИСПРАВИЛИ
+            client_obj = db.session.get(Client, client)
+            parking_obj = db.session.get(Parking, parking)
 
-            # Проверяем связь со стороны клиента
             assert len(client_obj.parkings) == 1
             assert client_obj.parkings[0].parking_id == parking
 
-            # Проверяем связь со стороны парковки
             assert len(parking_obj.clients) == 1
             assert parking_obj.clients[0].client_id == client
 
@@ -237,8 +231,6 @@ class TestRelationships:
             db.session.add_all([entry1, entry2])
             db.session.commit()
 
-            # Получаем клиента из БД
-            client_obj = db.session.get(Client, client)  # ИСПРАВИЛИ
+            client_obj = db.session.get(Client, client)
 
-            # Клиент может быть на разных парковках
             assert len(client_obj.parkings) == 2

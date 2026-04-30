@@ -1,12 +1,13 @@
-import sys
 import os
-import pytest
+import sys
 from datetime import datetime, timezone
+
+import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app
-from models import db, Client, Parking, ClientParking
+from models import ClientParking, db
 from tests.factories import ClientFactory, ParkingFactory
 
 
@@ -40,26 +41,25 @@ def db_session(app):
 @pytest.fixture
 def test_client(db_session):
     """Создает тестового клиента через фабрику"""
-    client = ClientFactory()
-    db_session.add(client)
+    client_obj = ClientFactory()
+    db_session.add(client_obj)
     db_session.commit()
-    return client
+    return client_obj
 
 
 @pytest.fixture
 def test_client_no_card(db_session):
     """Создает клиента без кредитной карты"""
-    client = ClientFactory.create_without_card()
-    db_session.add(client)
+    client_obj = ClientFactory.create_without_card()
+    db_session.add(client_obj)
     db_session.commit()
-    return client
+    return client_obj
 
 
 @pytest.fixture
 def test_parking(db_session):
     """Создает ОТКРЫТУЮ парковку со свободными местами"""
     parking = ParkingFactory.create_opened()
-    # Убеждаемся, что есть свободные места
     if parking.count_available_places == 0:
         parking.count_available_places = parking.count_places
     db_session.add(parking)
@@ -92,7 +92,7 @@ def test_parking_entry(db_session, test_client, test_parking):
     entry = ClientParking(
         client_id=test_client.id,
         parking_id=test_parking.id,
-        time_in=datetime.now(timezone.utc)
+        time_in=datetime.now(timezone.utc),
     )
     db_session.add(entry)
     test_parking.count_available_places -= 1

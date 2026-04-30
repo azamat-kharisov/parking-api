@@ -1,12 +1,13 @@
 # tests/test_api.py
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
+
 from app import create_app
-from models import db, Client, Parking, ClientParking
+from models import db, Client, Parking
 
 
 @pytest.fixture
@@ -41,7 +42,6 @@ def sample_client(app):
         )
         db.session.add(client)
         db.session.commit()
-        # Возвращаем ID, чтобы избежать DetachedInstanceError
         return client.id
 
 
@@ -79,7 +79,6 @@ class TestClientsAPI:
         }
         response = client.post('/clients', json=data)
         assert response.status_code == 201
-        # Исправлено: русское сообщение
         assert response.json['message'] == 'Клиент создан'
         assert 'id' in response.json
 
@@ -115,7 +114,6 @@ class TestParkingsAPI:
         }
         response = client.post('/parkings', json=data)
         assert response.status_code == 201
-        # Исправлено: русское сообщение
         assert response.json['message'] == 'Парковка создана'
 
     def test_create_parking_without_address(self, client):
@@ -143,7 +141,6 @@ class TestParkingOperationsAPI:
         }
         response = client.post('/client_parkings', json=data)
         assert response.status_code == 201
-        # Исправлено: русское сообщение
         assert response.json['message'] == 'Въезд разрешен'
         assert 'entry_id' in response.json
         assert response.json['available_places'] == 9
@@ -195,23 +192,19 @@ class TestParkingOperationsAPI:
             'client_id': sample_client,
             'parking_id': sample_parking
         }
-        # Первый въезд
         client.post('/client_parkings', json=data)
-        # Второй въезд
         response = client.post('/client_parkings', json=data)
         assert response.status_code == 400
         assert 'уже на этой парковке' in response.json['error']
 
     def test_exit_parking_success(self, client, sample_client, sample_parking):
         """Тест успешного выезда с парковки"""
-        # Сначала заезжаем
         enter_data = {
             'client_id': sample_client,
             'parking_id': sample_parking
         }
         client.post('/client_parkings', json=enter_data)
 
-        # Теперь выезжаем
         exit_data = {
             'client_id': sample_client,
             'parking_id': sample_parking
@@ -236,14 +229,12 @@ class TestParkingOperationsAPI:
             db.session.commit()
             client_id = client_no_card.id
 
-        # Заезжаем
         enter_data = {
             'client_id': client_id,
             'parking_id': sample_parking
         }
         client.post('/client_parkings', json=enter_data)
 
-        # Пытаемся выехать
         exit_data = {
             'client_id': client_id,
             'parking_id': sample_parking
